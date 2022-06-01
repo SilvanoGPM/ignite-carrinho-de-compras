@@ -19,24 +19,30 @@ interface CartContextData {
   updateProductAmount: ({ productId, amount }: UpdateProductAmount) => void;
 }
 
+const CART_STORAGE_KEY = '@RocketShoes:cart';
+
 const CartContext = createContext<CartContextData>({} as CartContextData);
 
 export function CartProvider({ children }: CartProviderProps): JSX.Element {
   const [cart, setCart] = useState<Product[]>(() => {
-    // const storagedCart = Buscar dados do localStorage
+    const storagedCart = localStorage.getItem(CART_STORAGE_KEY);
 
-    // if (storagedCart) {
-    //   return JSON.parse(storagedCart);
-    // }
+    if (storagedCart) {
+      return JSON.parse(storagedCart);
+    }
 
     return [];
   });
 
   const addProduct = async (productId: number) => {
     try {
-      // TODO
+      const { data } = await api.get<Product>(`/products/${productId}`);
+      
+      setCart([...cart, data]);
+    
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
     } catch {
-      // TODO
+      toast.error('Ocorreu um erro ao tentar adicionar produto ao carrinho!');
     }
   };
 
