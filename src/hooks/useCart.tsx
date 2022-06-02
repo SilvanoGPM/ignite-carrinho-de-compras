@@ -36,11 +36,32 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
 
   const addProduct = async (productId: number) => {
     try {
-      const { data } = await api.get<Product>(`/products/${productId}`);
-      
-      setCart([...cart, data]);
-    
-      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+      const updatedCart = [...cart];
+
+      const { data: stock } = await api.get<Stock>(`/stock/${productId}`);
+
+      const productExists = cart.find((product) => product.id === productId);
+
+      const stockAmount = stock.amount;
+      const currentAmount = productExists ? productExists.amount : 0;
+      const amount = currentAmount + 1;
+
+      if (amount > stockAmount) {
+        toast.error('Não há mais produtos no estoque.');
+        return;
+      }
+
+      if (productExists) {
+        productExists.amount = amount;
+      } else {
+        const { data: product } = await api.get(`/products/${productId}`);
+
+        updatedCart.push({ ...product, amount });
+      }
+
+      setCart(updatedCart);
+
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(updatedCart));
     } catch {
       toast.error('Ocorreu um erro ao tentar adicionar produto ao carrinho!');
     }
