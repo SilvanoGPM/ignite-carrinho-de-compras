@@ -47,7 +47,7 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
       const amount = currentAmount + 1;
 
       if (amount > stockAmount) {
-        toast.error('Não há mais produtos no estoque.');
+        toast.error('Quantidade solicitada fora de estoque');
         return;
       }
 
@@ -63,19 +63,25 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
 
       localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(updatedCart));
     } catch {
-      toast.error('Ocorreu um erro ao tentar adicionar produto ao carrinho!');
+      toast.error('Erro na adição do produto');
     }
   };
 
   const removeProduct = (productId: number) => {
     try {
+      const productExists = cart.find((product) => product.id === productId);
+
+      if (!productExists) {
+        throw Error();
+      }
+
       const updatedCart = cart.filter((product) => product.id !== productId);
 
       setCart(updatedCart);
 
       localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(updatedCart));
     } catch {
-      toast.error('Não foi possível remover o produto!');
+      toast.error('Erro na remoção do produto');
     }
   };
 
@@ -83,13 +89,17 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
     productId,
     amount,
   }: UpdateProductAmount) => {
+    if (amount <= 0) {
+      return;
+    }
+    
     try {
       const { data: stock } = await api.get<Stock>(`/stock/${productId}`);
  
       const stockAmount = stock.amount;
 
       if (amount > stockAmount) {
-        toast.error('Não há mais produtos no estoque.');
+        toast.error('Quantidade solicitada fora de estoque');
         return;
       }
 
@@ -102,8 +112,9 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
       });
 
       setCart(updatedCart);
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(updatedCart));
     } catch {
-      toast.error('Não foi possível atualizar a quantidade do produto!');
+      toast.error('Erro na alteração de quantidade do produto');
     }
   };
 
