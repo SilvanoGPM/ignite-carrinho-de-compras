@@ -69,9 +69,13 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
 
   const removeProduct = (productId: number) => {
     try {
-      // TODO
+      const updatedCart = cart.filter((product) => product.id !== productId);
+
+      setCart(updatedCart);
+
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(updatedCart));
     } catch {
-      // TODO
+      toast.error('Não foi possível remover o produto!');
     }
   };
 
@@ -80,9 +84,26 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
     amount,
   }: UpdateProductAmount) => {
     try {
-      // TODO
+      const { data: stock } = await api.get<Stock>(`/stock/${productId}`);
+ 
+      const stockAmount = stock.amount;
+
+      if (amount > stockAmount) {
+        toast.error('Não há mais produtos no estoque.');
+        return;
+      }
+
+      const updatedCart = cart.map((product) => {
+        if (product.id === productId) {
+          return { ...product, amount };
+        }
+
+        return product;
+      });
+
+      setCart(updatedCart);
     } catch {
-      // TODO
+      toast.error('Não foi possível atualizar a quantidade do produto!');
     }
   };
 
